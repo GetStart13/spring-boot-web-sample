@@ -1,0 +1,16 @@
+server:
+  port: 8067
+
+spring:
+  mvc:
+    static-path-pattern: "/path/**" # 修改访问路径（默认 /**），例如: localhost:8080/path/index.html
+
+  web:
+    resources:
+      # 默认路径: static
+      # 修改静态资源访问路径，多个路径路径用逗号","隔开（"classpath:template,classpath:static"）
+      # 子文件夹定位用点号分隔"."（理论上应该同样使用 / 分隔）
+      # `classpath:` 指类路径下的资源文件（resources），:后面不应带有空格（否则被视为路径字符）
+      # `file:` 指磁盘，文件系统，file:/ 指当前磁盘下根路径
+      # `/` 指根路径
+      static-locations: "classpath:/template,classpath:/static,file:./out.files,file:/dist.static"
