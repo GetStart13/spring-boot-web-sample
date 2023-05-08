@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>mower robot virtual machine</title>
+</head>
+<body>
+<div id="main" class="main">
+    <h1>mower robot virtual machine</h1>
+
+    <form id="mqttConnect" class="mqtt-connect">
+        <table>
+            <caption style="margin-bottom: 20px">
+                mqtt connect
+            </caption>
+            <tr>
+                <th></th>
+            </tr>
+
+            <tr>
+                <td>
+                    <label for="broker">broker:</label>
+                </td>
+                <td>
+                    <input
+                            id="broker"
+                            name="broker"
+                            value="tcp://113.98.203.116:1883"
+                    />
+                </td>
+                <td>
+                    <label for="username">username:</label>
+                </td>
+                <td>
+                    <input id="username" name="username" value="rabbitmq"/>
+                </td>
+                <td>
+                    <label for="password">password:</label>
+                </td>
+                <td><input id="password" type="password" name="password" value="123456"/></td>
+            </tr>
+
+            <tr>
+                <td><label for="clientId">clientId:</label></td>
+                <td>
+                    <input id="clientId" name="clientId" value="publish_client"/>
+                </td>
+
+                <td><label for="topic"> topic: </label></td>
+                <td><input id="topic" name="topic" value="HeartBeat"/></td>
+
+                <td><label for="qos"> qos: </label></td>
+                <td><input id="qos" name="qos" value="1"/></td>
+            </tr>
+        </table>
+    </form>
+
+    <form id="heartBeat" class="heart-beat">
+        <table>
+            <caption style="margin-bottom: 20px">
+                heartbeat
+            </caption>
+            <tr>
+                <th></th>
+            </tr>
+
+            <tr>
+                <td><label for="robotId"> robot id: </label></td>
+                <td><input id="robotId" name="robotId" value="A1002"/></td>
+
+                <td><label for="robotIp"> robot ip: </label></td>
+                <td><input id="robotIp" name="robotIp" value="10.122.100.123"/></td>
+
+                <td><label for="robotStatusCode">robot status code:</label></td>
+                <td>
+                    <select id="robotStatusCode" name="robotStatusCode">
+                        <option value="0" selected>online</option>
+                        <option value="1">task</option>
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <td><label for="pointX"> point x: </label></td>
+                <td><input id="pointX" name="pointX" value="23.46"/></td>
+
+                <td><label for="pointY"> point y: </label></td>
+                <td><input id="pointY" name="pointY" value="89"/></td>
+
+                <td><label for="pointLongitude"> point longitude: </label></td>
+                <td><input id="pointLongitude" name="pointLongitude" value="38.454"/></td>
+            </tr>
+
+            <tr>
+                <td><label for="pointLatitude"> point latitude: </label></td>
+                <td><input id="pointLatitude" name="pointLatitude" value="233.344"/></td>
+
+                <td><label for="robotPower"> robot battery: </label></td>
+                <td><input id="robotPower" name="robotPower" value="67.6"/></td>
+
+                <td><label for="batteryTemperature"> battery temperature: </label></td>
+                <td>
+                    <input
+                            id="batteryTemperature"
+                            name="batteryTemperature"
+                            value="45.6"
+                    />
+                </td>
+            </tr>
+
+            <tr>
+                <td><label for="mapId"> map id: </label></td>
+                <td><input id="mapId" name="mapId" value="A208344"/></td>
+
+                <td><label for="runTaskType"> task execute type: </label></td>
+                <td><input id="runTaskType" name="runTaskType" value="1"/></td>
+
+                <td><label for="runTaskDate"> task execute date: </label></td>
+                <td><input id="runTaskDate" name="runTaskDate" value="00:13:06"/></td>
+            </tr>
+
+            <tr>
+                <td>
+                    <label for="runTaskProgress"> task execute progress: </label>
+                </td>
+                <td>
+                    <input id="runTaskProgress" name="runTaskProgress" value="99"/>
+                </td>
+
+                <td><label for="runTaskArea"> task execute area: </label></td>
+                <td><input id="runTaskArea" name="runTaskArea" value="354"/></td>
+
+                <td><label for="version"> robot version: </label></td>
+                <td><input id="version" name="version" value="1.0.0"/></td>
+            </tr>
+        </table>
+    </form>
+
+    <div class="bottom-tool">
+        <div>
+            <button onclick="sendMessage()">send</button>
+        </div>
+
+        <div>
+            <input id="once" name="sendType" type="radio" checked/>
+            <label for="once">send once</label>
+            &nbsp;
+            <input id="loop" name="sendType" type="radio"/>
+            <label for="loop">send loop</label>
+        </div>
+
+        <div>
+            <label for="interval">interval(s):</label>
+            <select id="interval" name="sendInterval">
+                <option value="1">1s</option>
+                <option value="5">5s</option>
+                <option value="10">10s</option>
+                <option value="30">30s</option>
+            </select>
+        </div>
+
+        <div>
+            <button onclick="stopLoop()">stop send loop</button>
+        </div>
+    </div>
+</div>
+</body>
+<script>
+    const sendMessage = () => {
+        const sendType = document.getElementsByName("sendType");
+        sendType.forEach(v => {
+            if (v.checked && v.id === "once") {
+                sendOnce();
+            } else if (v.checked && v.id === "loop") {
+                sendLoop();
+            }
+        });
+    };
+
+    let interval = null;
+    const sendLoop = () => {
+        const select = document.getElementById("interval");
+        if (interval == null) {
+            interval = setInterval(() => sendOnce(), select.value * 1000);
+        } else {
+            alert("already loop");
+        }
+    };
+
+    const stopLoop = () => {
+        clearInterval(interval);
+        interval = null;
+    };
+
+    const sendOnce = () => {
+        const mqttConnectForm = document.getElementById("mqttConnect");
+        const heartBeatForm = document.getElementById("heartBeat");
+
+        const mqttConnect = new Map();
+        const heartBeat = new Map();
+
+        Array.from(mqttConnectForm.elements).forEach(v => {
+            mqttConnect.set(v.name, v.value);
+        });
+        Array.from(heartBeatForm.elements).forEach(v => {
+            heartBeat.set(v.name, v.value);
+        });
+
+        const message = new Map();
+        message.set("mqttClient", mqttConnect);
+        message.set("heartBeat", heartBeat);
+
+        const convertNestedMapToObject = (map) => {
+            if (map instanceof Map) {
+                map.forEach((v, k) => {
+                    if (v instanceof Map) {
+                        map.set(k, convertNestedMapToObject(v));
+                    }
+                });
+            }
+            return Object.fromEntries(map);
+        }
+
+        const messageJson = JSON.stringify(convertNestedMapToObject(message));
+
+        fetch("/example/message", {
+            method: "POST",
+            headers: {
+                "Content-type": "application/json",
+            },
+            body: messageJson,
+        });
+
+        console.log("send message: ", messageJson);
+    };
+</script>
+<style>
+    :root {
+        /* 根据屏幕宽度作为参照物，控制表单输入框的 <label> 和 <input> 标签，使多个表单达到对其效果 */
+        --main-width: calc(100vw * 0.8);
+        --child-content-width: calc(var(--main-width) * 0.9);
+        --form-label-width: calc(var(--child-content-width) / 3);
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    .main {
+        width: var(--main-width);
+        border: 1px solid #c0c0c0;
+        padding: 0 20px 10px 20px;
+        margin: 50px auto 0;
+    }
+
+    .mqtt-connect {
+        width: var(--child-content-width);
+        margin: 0 auto 20px;
+        padding: 10px 0 0 0;
+    }
+
+    table {
+        width: 100%;
+        mso-cellspacing: 0;
+    }
+
+    table td {
+        padding: 0;
+    }
+
+    table label {
+        width: calc((var(--form-label-width) - 5px) * 0.4);
+        display: inline-block;
+    }
+
+    form input {
+        width: calc((var(--form-label-width) - 5px) * 0.6);
+        margin: 0 0 10px 0;
+    }
+
+    .heart-beat {
+        width: var(--child-content-width);
+        margin: 0 auto 20px;
+        padding: 10px 0 0 0;
+    }
+
+    .bottom-tool {
+        display: flex;
+        width: 90%;
+        margin: 0 auto 20px;
+        justify-content: space-between;
+    }
+
+    .bottom-tool div {
+        flex-basis: auto;
+    }
+</style>
+</html>

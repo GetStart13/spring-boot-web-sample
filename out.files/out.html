@@ -6,5 +6,28 @@
 </head>
 <body>
 <h1>外部静态资源文件</h1>
+<div id="main">
+    <form id="messageForm">
+        <label>
+            username: <input name="username">
+        </label>
+        <label>
+            password: <input name="password">
+        </label>
+    </form>
+    <button onclick="sendMessage()">send</button>
+
+</div>
 </body>
+<script>
+    const sendMessage = () => {
+        console.log("send message");
+        const formData = document.getElementById("messageForm");
+        console.log(formData.elements);
+        Array.from(formData.elements).forEach(v => {
+            console.log(v.name);
+            console.log(v.value);
+        });
+    }
+</script>
 </html>
